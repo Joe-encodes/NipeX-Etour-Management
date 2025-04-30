@@ -1,0 +1,50 @@
+.dashboard-container {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.dashboard-container table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.dashboard-container th, .dashboard-container td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+}
+
+.dashboard-container th {
+    background-color: #f4f4f4;
+}
+
+.dashboard-container button {
+    padding: 8px 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.dashboard-container button:hover {
+    background-color: #0056b3;
+}
+
+.dashboard-container input[type="file"],
+.dashboard-container input[type="text"] {
+    padding: 8px;
+    margin: 5px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
