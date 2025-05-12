@@ -1,0 +1,35 @@
+# IDE
+.vs/
+.idea/
+.vscode/
+*.suo
+*.user
+*.userosscache
+
+# Runtime
+bin/
+obj/
+wwwroot/uploads/
+node_modules/
+dist/
+build/
+
+# Logs
+*.log
+*.tmp
+
+# Secrets
+.env
+*.pfx
+*.p12
+*.key
+*.crt
+*.csr
+
+# Misc
+.DS_Store
+Thumbs.db
+*.pyc
+
+# TempHashProject/
+
