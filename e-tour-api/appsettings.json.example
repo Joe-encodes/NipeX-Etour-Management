@@ -1,0 +1,17 @@
+{
+  "Jwt": {
+    "Key":  "<Your-256-bit-base64-secret>",
+    "Issuer": "eTourApi",
+    "Audience": "eTourApiAudience"
+  },
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=<DB_HOST>;Database=<DB_NAME>;Username=<DB_USER>;Password=<DB_PASSWORD>"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*"
+}

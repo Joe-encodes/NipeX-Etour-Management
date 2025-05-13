@@ -33,3 +33,7 @@ Thumbs.db
 
 # TempHashProject/
 
+appsettings.json
+project_structure.txt
+TempHashProject/Program.cs
+traverse.py
