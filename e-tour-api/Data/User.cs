@@ -1,3 +1,5 @@
+//User.cs
+
 using System.Collections.Generic;
 
 namespace e_tour_api.Data

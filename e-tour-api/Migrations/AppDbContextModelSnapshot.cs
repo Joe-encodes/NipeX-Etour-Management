@@ -56,7 +56,7 @@ namespace e_tour_api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Documents");
+                    b.ToTable("Documents", (string)null);
 
                     b.HasData(
                         new
@@ -106,7 +106,7 @@ namespace e_tour_api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("e_tour_api.Data.Document", b =>

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.IO;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
+using iText.IO.Font.Constants;
 using iText.Kernel.Font;
 namespace e_tour_api.Controllers
 {
@@ -248,7 +249,9 @@ namespace e_tour_api.Controllers
                         var page = pdf.GetPage(1); // 1-based index in iText7
                         var canvas = new iText.Kernel.Pdf.Canvas.PdfCanvas(page);
                         canvas.BeginText();
-                        canvas.SetFontAndSize(iText.Kernel.Font.PdfFontFactory.CreateFont(iText.Kernel.Font.StandardFonts.HELVETICA), 12);
+
+                        var font = PdfFontFactory.CreateFont(StandardFonts.HELVETICA);
+                        canvas.SetFontAndSize(font, 12);
                         canvas.MoveText(50, 50); // X, Y (from bottom-left)
                         canvas.ShowText($"Approved by: {request.Signature}");
                         canvas.EndText();

@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿// 20250324031809_UpdateModelWithStaticHashesAndRelationships.cs
+
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 

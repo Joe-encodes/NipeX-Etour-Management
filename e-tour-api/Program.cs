@@ -1,3 +1,5 @@
+// Program.cs
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -113,43 +115,43 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Seed initial users at startup
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    context.Database.Migrate();
+// // Seed initial users at startup
+// using (var scope = app.Services.CreateScope())
+// {
+//     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+//     context.Database.Migrate();
 
-    if (!context.Users.Any())
-    {
-        context.Users.AddRange(
-            new User
-            {
-                Id = 1,
-                Username = "testuser",
-                PasswordHash = HashGenerator.HashPassword("testpassword"),
-                Email = "testuser@example.com",
-                Role = "User"
-            },
-            new User
-            {
-                Id = 2,
-                Username = "approver",
-                PasswordHash = HashGenerator.HashPassword("approverpassword"),
-                Email = "approver@example.com",
-                Role = "Approver"
-            },
-            new User
-            {
-                Id = 3,
-                Username = "admin",
-                PasswordHash = HashGenerator.HashPassword("adminpassword"),
-                Email = "admin@example.com",
-                Role = "Admin"
-            }
-        );
-        context.SaveChanges();
-    }
-}
+//     if (!context.Users.Any())
+//     {
+//         context.Users.AddRange(
+//             new User
+//             {
+//                 Id = 1,
+//                 Username = "testuser",
+//                 PasswordHash = HashGenerator.HashPassword("testpassword"),
+//                 Email = "testuser@example.com",
+//                 Role = "User"
+//             },
+//             new User
+//             {
+//                 Id = 2,
+//                 Username = "approver",
+//                 PasswordHash = HashGenerator.HashPassword("approverpassword"),
+//                 Email = "approver@example.com",
+//                 Role = "Approver"
+//             },
+//             new User
+//             {
+//                 Id = 3,
+//                 Username = "admin",
+//                 PasswordHash = HashGenerator.HashPassword("adminpassword"),
+//                 Email = "admin@example.com",
+//                 Role = "Admin"
+//             }
+//         );
+//         context.SaveChanges();
+//     }
+// }
 
 app.MapControllers();
 app.Run();

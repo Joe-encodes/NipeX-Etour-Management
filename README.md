@@ -35,30 +35,40 @@ cd NipeX-Etour-Management
 
 ### 2. Database Configuration
 
-**File:** `e-tour-api/appsettings.json`
+1. **Copy the example** into your real config
 
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=eTourDB;Trusted_Connection=True;"
-  },
-  "Jwt": {
-    "Key": "GENERATE_NEW_256BIT_KEY_HERE",
-    "Issuer": "nipex-etour-api"
-  },
-  "FileStorage": {
-    "UploadPath": "wwwroot/uploads",
-    "MaxFileSizeMB": 50
-  }
-}
-```
+   ```bash
+   cp e-tour-api/appsettings.json.example e-tour-api/appsettings.json
+   ```
+2. **Edit** `e-tour-api/appsettings.json` and fill in the placeholders:
 
-*Run migrations:*
+   ```json
+   {
+     "Jwt": {
+       "Key":  "<Your-256-bit-base64-secret>",
+       "Issuer": "eTourApi",
+       "Audience": "eTourApiAudience"
+     },
+     "ConnectionStrings": {
+       "DefaultConnection": "Host=<DB_HOST>;Database=<DB_NAME>;Username=<DB_USER>;Password=<DB_PASSWORD>"
+     },
+     "Logging": {
+       "LogLevel": {
+         "Default": "Information",
+         "Microsoft.AspNetCore": "Warning"
+       }
+     },
+     "AllowedHosts": "<YOUR_HOSTNAME>"
+   }
+   ```
+3. **Run migrations** to create your schema:
 
-```powershell
-cd e-tour-api
-dotnet ef database update --context AppDbContext
-```
+   ```bash
+   cd e-tour-api
+   dotnet ef database update --context AppDbContext
+   ```
+
+---
 
 ### 3. Backend Initialization
 
@@ -248,7 +258,3 @@ await using var fileStream = new FileStream(
 * **Data Dictionary:** `e-tour-api/Data/Models_Documentation.md`
 
 ```
-
-Feel free to tweak any sections to match your org’s conventions or add badges (build, coverage, etc.) at the top. This layout keeps everything scannable and Git-friendly!
-```
-

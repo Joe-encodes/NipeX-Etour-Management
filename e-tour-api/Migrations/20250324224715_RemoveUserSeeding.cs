@@ -1,4 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿// 20250324224715_RemoveUserSeeding.cs
+
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace e_tour_api.Migrations
 {
