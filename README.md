@@ -1,260 +1,189 @@
-# NipeX e-Tour Management System  
+# NipeX e-Tour Management System
+
 **Secure Document Workflow Platform for Government Travel Authorization**
 
 ---
 
-## 🎯 Purpose  
-Automates Nigeria’s public-sector travel approval process with:  
-- **Role-Based Access Control** (Admin / Approver / User)  
-- **PDF Document Signing** with audit trails  
-- **Multi-Level Approval Workflows**  
-- **Secure File Storage** with GUID-based naming  
-- **Hash Verification** for document integrity  
+## 🔍 Quick Start
+
+1. **Clone the repository**
+
+   ```bash
+   git clone https://github.com/[your-org]/NipeX-Etour-Management.git
+   cd NipeX-Etour-Management
+   ```
+2. **Install prerequisites**
+
+   * **.NET SDK 8**: Download and install from [https://dotnet.microsoft.com/download/dotnet/8.0](https://dotnet.microsoft.com/download/dotnet/8.0)
+   * **Node.js 16+ & npm**: Install from [https://nodejs.org/](https://nodejs.org/)
+   * **PostgreSQL client (`psql`)**: Ensure it’s on your PATH.
+3. **Configure environment**
+
+   * Copy and edit the API settings:
+
+     ```bash
+     cp e-tour-api/appsettings.json.example e-tour-api/appsettings.json
+     ```
+   * Open `e-tour-api/appsettings.json` and fill in:
+
+     ```json
+     {
+       "Jwt": {
+         "Key": "<Your-256-bit-base64-secret>",
+         "Issuer": "eTourApi",
+         "Audience": "eTourApiAudience"
+       },
+       "ConnectionStrings": {
+         "DefaultConnection": "Host=<DB_HOST>;Database=<DB_NAME>;Username=<DB_USER>;Password=<DB_PASSWORD>"
+       },
+       "AllowedHosts": "<YOUR_HOSTNAME>"
+     }
+     ```
+4. **Apply database migrations**
+
+   ```bash
+   cd e-tour-api
+   dotnet tool run dotnet-ef database update --context AppDbContext
+   ```
+5. **Run the applications**
+
+   * **API** (port 5000):
+
+     ```bash
+     dotnet run --project e-tour-api
+     ```
+   * **Frontend** (port 3000):
+
+     ```bash
+     cd e-tour-frontend
+     npm start
+     ```
+
+Browse:
+
+* **React UI** → [http://localhost:3000](http://localhost:3000)
+* **Swagger API docs** → [http://localhost:5000/swagger](http://localhost:5000/swagger)
 
 ---
 
-## 🛠️ System Requirements  
+## 🎯 Purpose
 
-| Component   | Specification                                 |
-|-------------|-----------------------------------------------|
-| **Backend** | .NET 6 SDK, SQL Server 2019+, PowerShell 7+    |
-| **Frontend**| Node.js 16.x, npm 8.x+                        |
-| **Dev Tools** | Visual Studio 2022 / .NET CLI, VS Code      |
-| **OS**      | Windows 10+ / Linux (WSL2 recommended)         |
+Automates Nigeria’s public-sector travel approval process with:
+
+* **Role-Based Access Control** (Admin / Approver / User)
+* **PDF Document Signing** with audit trails
+* **Multi-Level Approval Workflows**
+* **Secure File Storage** with GUID-based naming
+* **Hash Verification** for document integrity
+
+---
+
+## 🛠 System Requirements
+
+| Component     | Specification                      |
+| ------------- | ---------------------------------- |
+| **Backend**   | .NET SDK 8                         |
+| **Frontend**  | Node.js 16.x & npm                 |
+| **Database**  | PostgreSQL (client for migrations) |
+| **Dev Tools** | VS Code / Visual Studio / .NET CLI |
+| **OS**        | Windows 10+ / Linux / macOS        |
 
 ---
 
 ## 🚀 Full Setup Guide
 
-### 1. Repository Setup  
+### 1. Repository Setup
 
 ```bash
-git clone https://github.com/[your-org]/NipeX-Etour-Management.git
-cd NipeX-Etour-Management
-````
+# Already covered in Quick Start
+```
 
 ### 2. Database Configuration
 
-1. **Copy the example** into your real config
+```bash
+# Copy example and edit
+cp e-tour-api/appsettings.json.example e-tour-api/appsettings.json
+```
 
-   ```bash
-   cp e-tour-api/appsettings.json.example e-tour-api/appsettings.json
-   ```
-2. **Edit** `e-tour-api/appsettings.json` and fill in the placeholders:
-
-   ```json
-   {
-     "Jwt": {
-       "Key":  "<Your-256-bit-base64-secret>",
-       "Issuer": "eTourApi",
-       "Audience": "eTourApiAudience"
-     },
-     "ConnectionStrings": {
-       "DefaultConnection": "Host=<DB_HOST>;Database=<DB_NAME>;Username=<DB_USER>;Password=<DB_PASSWORD>"
-     },
-     "Logging": {
-       "LogLevel": {
-         "Default": "Information",
-         "Microsoft.AspNetCore": "Warning"
-       }
-     },
-     "AllowedHosts": "<YOUR_HOSTNAME>"
-   }
-   ```
-3. **Run migrations** to create your schema:
-
-   ```bash
-   cd e-tour-api
-   dotnet ef database update --context AppDbContext
-   ```
-
----
+Fill placeholders in `appsettings.json` as shown above.
 
 ### 3. Backend Initialization
 
-* **Key Files:**
-
-  * `Data/AppDbContext.cs` — DB configuration
-  * `Controllers/DocumentsController.cs` — Core business logic
-  * `GenerateHash.cs` — Password-hashing utility
-
 ```bash
-# Install dependencies
+cd e-tour-api
+# Restore packages and tools
 dotnet restore
-
-# Seed initial admin (run ONCE after DB creation)
-dotnet run --project e-tour-api -- seed-admin
+# (Re-)generate dotnet-ef if needed
+# dotnet tool restore
+# Apply migrations
+dotnet tool run dotnet-ef database update --context AppDbContext
 ```
 
 ### 4. Frontend Setup
 
-**File:** `e-tour-frontend/.env`
+```bash
+cd e-tour-frontend
+# Install exact dependencies
+npm ci
+```
+
+Ensure `.env` exists and contains:
 
 ```env
 REACT_APP_API_URL=http://localhost:5000
 REACT_APP_ENV=development
 ```
 
-```bash
-cd e-tour-frontend
-npm install --force   # fixes potential react-scripts conflicts
-```
+### 5. Running in Development
 
----
-
-## 🔄 Running the System
-
-### Development Mode
-
-| Component    | Command      | Port | Key Endpoints                                 |
-| ------------ | ------------ | ---- | --------------------------------------------- |
-| **API**      | `dotnet run` | 5000 | `POST /api/auth/login`, `POST /api/documents` |
-| **Frontend** | `npm start`  | 3000 | `/dashboard` (role-based views)               |
-
-### Production Build
-
-```bash
-cd e-tour-frontend
-npm run build
-
-dotnet publish e-tour-api -c Release -o ./publish
-```
+| Service | Command      | Port | Notes                            |
+| ------- | ------------ | ---- | -------------------------------- |
+| **API** | `dotnet run` | 5000 | Automatically reloads on changes |
+| **UI**  | `npm start`  | 3000 | Hot-reloads React                |
 
 ---
 
 ## 🗂️ Critical File Map
 
-| Component             | Location                                           | Purpose                    |
-| --------------------- | -------------------------------------------------- | -------------------------- |
-| **DB Context**        | `e-tour-api/Data/AppDbContext.cs`                  | EF Core configuration      |
-| **Auth Logic**        | `Controllers/AuthController.cs`                    | JWT token generation       |
-| **Document Model**    | `Data/Document.cs`                                 | PDF metadata schema        |
-| **Approval Workflow** | `Controllers/DocumentsController.cs` (line 89)     | Multi-stage approval logic |
-| **React Routing**     | `e-tour-frontend/src/App.js`                       | Dashboard access control   |
-| **PDF Viewer**        | `e-tour-frontend/src/components/DocumentViewer.js` | Signed PDF rendering       |
+| Component         | Path                                            | Purpose                       |
+| ----------------- | ----------------------------------------------- | ----------------------------- |
+| **DB Context**    | `e-tour-api/Data/AppDbContext.cs`               | EF Core models & seeding      |
+| **Migrations**    | `e-tour-api/Migrations/`                        | Versioned schema changes      |
+| **Auth Logic**    | `e-tour-api/Controllers/AuthController.cs`      | JWT token endpoints           |
+| **Documents API** | `e-tour-api/Controllers/DocumentsController.cs` | Core document operations      |
+| **Hash Utility**  | `e-tour-api/Utilities/HashGenerator.cs`         | Password hashing              |
+| **React Entry**   | `e-tour-frontend/src/App.js`                    | Routing & layout              |
+| **Env Example**   | `e-tour-frontend/.env.example`                  | Frontend environment settings |
 
 ---
 
-## 🔧 Common Customizations
+## 🔧 Customizations & Tips
 
-### 1. Modify Approval Workflow
-
-**File:** `Controllers/DocumentsController.cs`
-
-```csharp
-// Line 135: Change approval stages
-var requiredApprovals = document.DocumentType switch
-{
-    "International" => 3, // add/remove levels
-    "Domestic"     => 2,
-    _              => 1
-};
-```
-
-### 2. Add a New User Role
-
-1. **Update** `Data/User.cs`:
-
-   ```csharp
-   public enum UserRole { Admin, Approver, Auditor, User } // Added Auditor
-   ```
-2. **Adjust** `AuthController.cs` role checks
-3. **Extend** `e-tour-frontend/src/components/RoleRouter.js`
-
-### 3. Swap to Azure Blob Storage
-
-**File:** `Controllers/DocumentsController.cs`
-
-```csharp
-// Line 72: Use Azure Blob instead of local FS
-await using var fileStream = new FileStream(
-    Path.Combine(_config["Azure:BlobPath"], fileName),
-    FileMode.Create);
-```
+* **Approval Workflow**: Tweak in `DocumentsController.cs` switch-case on `DocumentType`.
+* **Add Roles**: Extend `Data/User.cs` enum and update both backend & UI routing.
+* **Change Storage**: Swap local FS to cloud in the upload code path.
 
 ---
 
-## 🚨 Troubleshooting Matrix
+## 🚨 Troubleshooting
 
-| Issue                 | Solution                                                                    | Verification Command                                   |
-| --------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------ |
-| **Migrations Failed** | Delete `Migrations/`, then run `dotnet ef migrations add InitialCreate`     | `dotnet ef migrations list`                            |
-| **PDF Upload 404**    | Ensure `wwwroot/uploads` exists; add `app.UseStaticFiles()` in `Program.cs` | `curl -I http://localhost:5000/uploads/test.txt`       |
-| **JWT Expired**       | Increase `Jwt:ExpiryHours` in `appsettings.json`                            | Check `Response.Headers["X-Token-Expiry"]`             |
-| **Approval Stuck**    | Audit `Document.Status` enum in `Data/Document.cs`                          | `SELECT Status FROM Documents WHERE Id = [ID];` in SQL |
+1. **Migrations error**: Drop DB, clear migrations folder, re-create initial migration:
 
----
-
-## 🔒 Security Hardening
-
-1. **Secret Rotation**
-
-   * Rotate JWT key weekly in `appsettings.json`
-   * Regenerate salt in `GenerateHash.cs` post-deploy
-
-2. **Database Encryption**
-
-   ```sql
-   CREATE COLUMN MASTER KEY [CMK_Auto1]  
-   WITH (
-     KEY_STORE_PROVIDER_NAME = N'MSSQL_CERTIFICATE_STORE',
-     KEY_PATH = N'CurrentUser/My/AAABBBBCCCDDD'
-   );
+   ```bash
    ```
 
-3. **Audit Logs**
-
-   ```csharp
-   // In Program.cs
-   services.AddAuditLog(config =>
-   {
-       config.UseEntityFramework(_ => _
-           .AuditTypeMapper(t => typeof(AuditLog))
-           .AuditEntityAction<AuditLog>((ev, ent) =>
-           {
-               ent.Action = ev.Action;
-               ent.User   = ev.User;
-           }));
-   });
-   ```
-
----
-
-## 🚀 Deployment Checklist
-
-1. **Set Production ENV vars (systemd example):**
-
-   ```ini
-   [Service]
-   Environment="ASPNETCORE_ENVIRONMENT=Production"
-   Environment="CONNECTIONSTRINGS__DEFAULTCONNECTION=Server=prod-db;Database=eTour..."
-   ```
-
-2. **Dockerize API**
-
-   ```dockerfile
-   # Build stage
-   FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
-   WORKDIR /src
-   COPY ["e-tour-api/*.csproj", "e-tour-api/"]
-   RUN dotnet restore "e-tour-api/e-tour-api.csproj"
-   COPY . .
-   RUN dotnet publish -c Release -o /app
-
-   # Runtime stage
-   FROM mcr.microsoft.com/dotnet/aspnet:6.0
-   WORKDIR /app
-   COPY --from=build /app .
-   ENTRYPOINT ["dotnet", "e-tour-api.dll"]
-   ```
+dotnet tool run dotnet-ef database drop -f --context AppDbContext
+dotnet ef migrations remove # until empty
+dotnet ef migrations add InitialCreate
+dotnet ef database update\`\`\`
+2\. **Duplicates**: Unique key violations mean seed data already exists—use a fresh DB or adjust seed IDs.
+3\. **Missing fonts**: If PDF rendering errors, ensure iText7 StandardFonts package is referenced.
 
 ---
 
 ## 📚 Appendix
 
-* **License:** MIT (`LICENSE.md`)
-* **Support:** [etour-support@nipex.gov.ng](mailto:etour-support@nipex.gov.ng)
-* **API Docs:** `http://localhost:5000/swagger` (enable in `Program.cs`)
-* **Data Dictionary:** `e-tour-api/Data/Models_Documentation.md`
-
-```
+* **License**: MIT (`LICENSE.md`)
+* **Support**: [etour-support@nipex.gov.ng](mailto:etour-support@nipex.gov.ng)
+* **Swagger**: `http://localhost:5000/swagger`
+* **Data Dictionary**: `e-tour-api/Data/Models_Documentation.md`
