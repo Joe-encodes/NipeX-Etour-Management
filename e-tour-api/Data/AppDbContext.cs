@@ -22,7 +22,7 @@ namespace e_tour_api.Data
                 {
                     Id = 1,
                     FileName = "Test Document 1",
-                    FilePath = "path/to/test-document-1.pdf",
+                    FilePath = "../wwwroot/uploads/3fdb0d6a-b94e-437f-8feb-95ead990f86d.pdf",
                     Status = "Pending",
                     Signature = null,
                     UserId = 1,
@@ -32,7 +32,7 @@ namespace e_tour_api.Data
                 {
                     Id = 2,
                     FileName = "Test Document 2",
-                    FilePath = "path/to/test-document-2.pdf",
+                    FilePath = "../wwwroot/uploads/1a0649bc-6b35-4cb1-83df-2232a5793c3c.PDF",
                     Status = "Signed",
                     Signature = "Approver Signature",
                     UserId = 1,

@@ -1,15 +1,20 @@
-﻿using e_tour_api.Data;
+﻿//DocumentsController.cs
+// <summary>
+// This controller handles document upload, approval, and download functionalities.
+// It includes methods for users to upload documents, approvers to approve them,
+// and admins to view all documents and users.
+// </summary>
+
+using System;
+using System.Threading.Tasks;
+using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Security.Claims;
-using System.Threading.Tasks;
-using System.IO;
-using iText.Kernel.Pdf;
-using iText.Kernel.Pdf.Canvas;
-using iText.IO.Font.Constants;
-using iText.Kernel.Font;
+using Microsoft.Extensions.Logging;
+using e_tour_api.Services; // For IDocumentService
+using e_tour_api.Data; // For AppDbContext and Document
+
 namespace e_tour_api.Controllers
 {
     [Route("api/[controller]")]
@@ -18,11 +23,18 @@ namespace e_tour_api.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IWebHostEnvironment _environment;
+        private readonly IPdfStampService _stampService;
+        private readonly ILogger<DocumentsController> _logger;
+        private readonly IDocumentService _documentService;
 
-        public DocumentsController(AppDbContext context, IWebHostEnvironment environment)
+
+        public DocumentsController(AppDbContext context, IWebHostEnvironment environment, IPdfStampService stampService, ILogger<DocumentsController> logger, IDocumentService documentService)
         {
-            _context = context;
+            _stampService = stampService;
             _environment = environment;
+            _context = context;
+            _logger = logger;
+            _documentService = documentService;
         }
 
         // GET: api/documents
@@ -189,90 +201,40 @@ namespace e_tour_api.Controllers
             }
         }
 
-        // POST: api/documents/approve/{id}
-        // POST: api/documents/approve/{id}
+       // POST: api/documents/approve/{id}
         [HttpPost("approve/{id}")]
         [Authorize(Roles = "Approver")]
-        public async Task<IActionResult> ApproveDocument(int id, [FromBody] ApprovalRequest request)
+        public async Task<IActionResult> ApproveDocument(int id, [FromBody] ApprovalRequest req)
         {
-            try
-            {
-                var document = await _context.Documents.FindAsync(id);
-                if (document == null || document.Status != "Pending")
-                    return NotFound("Document not found or already processed.");
+            try {
+                var document = await _documentService.GetDocumentById(id);
+                if (document == null)
+                    return NotFound();
 
-                if (string.IsNullOrEmpty(request.Signature))
-                    return BadRequest("Signature is required.");
+                // Id is plain int, no HasValue needed
+                int docId = document.Id;
 
-                // Validate file existence and type
-                if (string.IsNullOrEmpty(document.FilePath))
-                    return BadRequest("Document file path is missing.");
-                if (!System.IO.File.Exists(document.FilePath))
-                    return BadRequest($"File not found at path: {document.FilePath}");
-                if (!document.FilePath.ToLower().EndsWith(".pdf"))
-                    return BadRequest("Only PDF files can be signed.");
+                var result = await _documentService.StampDocument(
+                    documentId: docId,
+                    stampText: $"Approved by {req.Signature ?? "Unknown"} on {DateTime.UtcNow:yyyy-MM-dd}",
+                    uploadsPath: Path.Combine(_environment.WebRootPath, "uploads")
+                );
 
-                // Define the signed file path
-                var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
-                var signedFileName = $"signed_{Path.GetFileName(document.FilePath)}";
-                var signedFilePath = Path.Combine(uploadsFolder, signedFileName);
+                if (!result.Success)
+                    return BadRequest(result.ErrorMessage);
 
-                // Log the file path for debugging
-                Console.WriteLine($"Attempting to write signed PDF to: {signedFilePath}");
-
-                // Check if the directory is writable
-                try
-                {
-                    var directoryInfo = new DirectoryInfo(uploadsFolder);
-                    if (!directoryInfo.Exists)
-                    {
-                        directoryInfo.Create();
-                    }
-
-                    // Test write access
-                    var testFile = Path.Combine(uploadsFolder, "test.txt");
-                    System.IO.File.WriteAllText(testFile, "test");
-                    System.IO.File.Delete(testFile);
-                }
-                catch (Exception ex)
-                {
-                    return StatusCode(500, $"Failed to verify write access to uploads directory: {ex.Message}\nStackTrace: {ex.StackTrace}");
-                }
-
-                // Add signature to the PDF using iText7
-                try
-                {
-                    using (var reader = new iText.Kernel.Pdf.PdfReader(document.FilePath))
-                    using (var writer = new iText.Kernel.Pdf.PdfWriter(signedFilePath))
-                    using (var pdf = new iText.Kernel.Pdf.PdfDocument(reader, writer))
-                    {
-                        var page = pdf.GetPage(1); // 1-based index in iText7
-                        var canvas = new iText.Kernel.Pdf.Canvas.PdfCanvas(page);
-                        canvas.BeginText();
-
-                        var font = PdfFontFactory.CreateFont(StandardFonts.HELVETICA);
-                        canvas.SetFontAndSize(font, 12);
-                        canvas.MoveText(50, 50); // X, Y (from bottom-left)
-                        canvas.ShowText($"Approved by: {request.Signature}");
-                        canvas.EndText();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    return StatusCode(500, $"PDF processing error: {ex.GetType().FullName} - {ex.Message}\nStackTrace: {ex.StackTrace}");
-                }
-
-                // Update document record
-                document.Status = "Signed";
-                document.Signature = request.Signature;
-                document.SignedFilePath = signedFilePath;
-                await _context.SaveChangesAsync();
-
-                return Ok(new { message = "Document approved and signed successfully" });
+                return Ok(new {
+                    message = "Stamped successfully",
+                    path = Path.GetFileName(result.SignedFilePath!)
+                });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, $"Internal server error: {ex.Message}\nStackTrace: {ex.StackTrace}");
+                _logger.LogError(ex, "Error approving document {DocumentId}", id);
+                return StatusCode(500, new {
+                    error = "Failed to approve document",
+                    details = ex.Message
+                });
             }
         }
 
@@ -283,27 +245,32 @@ namespace e_tour_api.Controllers
         {
             try
             {
-                var document = await _context.Documents.FindAsync(id);
-                if (document == null || document.Status != "Signed")
-                    return NotFound("Document not found or not signed.");
+                // Verify permissions through service
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                    return Unauthorized("Invalid user ID");
 
-                var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
-                if (document.UserId != userId)
-                    return Unauthorized("You can only download your own documents.");
+                // Now use 'userId' (non-nullable int) in your service calls:
+                var accessCheck = await _documentService.VerifyDocumentAccess(id, userId);              
+                if (!accessCheck.HasAccess)
+                    return StatusCode(accessCheck.ErrorCode ?? 500, accessCheck.ErrorMessage);
 
-                if (string.IsNullOrEmpty(document.SignedFilePath))
-                    return BadRequest("Signed file path is not available.");
+                // Get file through service
+                var fileResult = await _documentService.GetDocumentFile(id);
+                if (!fileResult.Success)
+                    return StatusCode(fileResult.ErrorCode ?? 500, fileResult.ErrorMessage);
 
-                var fileStream = System.IO.File.OpenRead(document.SignedFilePath);
-                return File(fileStream, "application/pdf", document.FileName);
+                if (fileResult.FileContents == null)
+                    return StatusCode(404, "File not found");
+                return File(fileResult.FileContents, "application/pdf", fileResult.FileName);
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error downloading document {DocumentId}", id);
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
     }
-
     public class ApprovalRequest
     {
         public string? Signature { get; set; }
