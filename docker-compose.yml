@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: etouruser
+      POSTGRES_PASSWORD: etourpassword
+      POSTGRES_DB: etourdb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  backend:
+    build:
+      context: ./e-tour-api
+      dockerfile: Dockerfile
+    environment:
+      - DB_CONNECTION_STRING=Host=db;Database=etourdb;Username=etouruser;Password=etourpassword
+      - JWT_KEY=YourJWTSecretKeyHere
+    depends_on:
+      - db
+    ports:
+      - "5000:80"
+
+  frontend:
+    build:
+      context: ./e-tour-frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
