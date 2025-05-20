@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './Dashboard.css';
+import config from '../config'; // config file for API base URL
 
 const UserDashboard = () => {
     const [file, setFile] = useState(null);
@@ -14,7 +15,7 @@ const UserDashboard = () => {
     const fetchDocuments = async () => {
         try {
             const token = localStorage.getItem('token');
-            const response = await axios.get('http://localhost:5237/api/documents', {
+            const response = await axios.get(`${config.api.baseUrl}/api/documents`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setDocuments(response.data);
@@ -41,7 +42,7 @@ const UserDashboard = () => {
 
         try {
             const token = localStorage.getItem('token');
-            await axios.post('http://localhost:5237/api/documents/upload', formData, {
+            await axios.post(`${config.api.baseUrl}/api/documents/upload`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
@@ -69,7 +70,16 @@ const UserDashboard = () => {
             link.click();
             document.body.removeChild(link);
         } catch (error) {
-            setMessage(`Failed to download: ${error.response?.data || error.message}`);
+            if (error.response?.data instanceof Blob) {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const errorMessage = reader.result || 'Unknown error';
+                    setMessage(`Failed to download: ${errorMessage}`);
+                };
+                reader.readAsText(error.response.data);
+            } else {
+                setMessage(`Failed to download: ${error.response?.data || error.message}`);
+            }
         }
     };
 

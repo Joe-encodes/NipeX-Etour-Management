@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
-
+import config from '../config.js';
 const ApproverDashboard = () => {
     const [documents, setDocuments] = useState([]);
     const [signature, setSignature] = useState('');
+    const [password, setPassword] = useState(''); // New state for optional password
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false); // Added for loading state
     const navigate = useNavigate();
@@ -18,7 +19,7 @@ const ApproverDashboard = () => {
         try {
             setLoading(true);
             const token = localStorage.getItem('token');
-            const response = await axios.get('http://localhost:5237/api/documents/pending', {
+            const response = await axios.get(`${config.api.baseUrl}/api/documents/pending`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             setDocuments(response.data);
@@ -40,8 +41,8 @@ const ApproverDashboard = () => {
             setMessage('Approving document...');
             const token = localStorage.getItem('token');
             const response = await axios.post(
-                `http://localhost:5237/api/documents/approve/${documentId}`,
-                { signature },
+                `${config.api.baseUrl}/api/documents/approve/${documentId}`,
+                { signature, password: password || null },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
             setMessage(response.data.message || 'Document approved successfully');
@@ -74,6 +75,16 @@ const ApproverDashboard = () => {
                     onChange={(e) => setSignature(e.target.value)}
                     placeholder="Enter your signature"
                     required
+                    disabled={loading}
+                />
+            </div>
+            <div>
+                <label>Password:</label>
+                <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter password"
                     disabled={loading}
                 />
             </div>

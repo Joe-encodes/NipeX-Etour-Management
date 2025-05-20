@@ -42,7 +42,8 @@
 }
 
 .dashboard-container input[type="file"],
-.dashboard-container input[type="text"] {
+.dashboard-container input[type="text"],
+.dashboard-container input[type="password"] {
     padding: 8px;
     margin: 5px 0;
     border: 1px solid #ccc;

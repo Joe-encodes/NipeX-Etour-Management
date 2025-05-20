@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
+import './Register.css';
+import config from '../config'; // config file for API base URL
 
 const Register = () => {
     const [username, setUsername] = useState('');
@@ -13,7 +16,7 @@ const Register = () => {
         setMessage('');
 
         try {
-            const response = await axios.post('http://localhost:5237/api/auth/register', {
+            await axios.post(`${config.api.baseUrl}/api/auth/register`, {
                 username,
                 password,
                 email,
@@ -26,39 +29,50 @@ const Register = () => {
     };
 
     return (
-        <div>
+        <div className="register-container">
             <h2>Register</h2>
             <form onSubmit={handleRegister}>
-                <div>
-                    <label>Username:</label>
+                <div className="form-row">
+                    <label htmlFor="username" className="form-label">Username:</label>
                     <input
+                        id="username"
+                        className="form-input"
                         type="text"
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         required
                     />
                 </div>
-                <div>
-                    <label>Password:</label>
+                <div className="form-row">
+                    <label htmlFor="password" className="form-label">Password:</label>
                     <input
+                        id="password"
+                        className="form-input"
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
                     />
                 </div>
-                <div>
-                    <label>Email:</label>
+                <div className="form-row">
+                    <label htmlFor="email" className="form-label">Email:</label>
                     <input
+                        id="email"
+                        className="form-input"
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
                     />
                 </div>
-                <div>
-                    <label>Role:</label>
-                    <select value={role} onChange={(e) => setRole(e.target.value)}>
+                <div className="form-row">
+                    <label htmlFor="role" className="form-label">Role:</label>
+                    <select
+                        id="role"
+                        className="form-input"
+                        value={role}
+                        onChange={(e) => setRole(e.target.value)}
+                    >
                         <option value="User">User</option>
                         <option value="Approver">Approver</option>
                         <option value="Admin">Admin</option>
@@ -66,7 +80,8 @@ const Register = () => {
                 </div>
                 <button type="submit">Register</button>
             </form>
-            {message && <p>{message}</p>}
+            {message && <p className="error-message">{message}</p>}
+            <p>Already have an account? <Link to="/">Login here</Link></p>
         </div>
     );
 };

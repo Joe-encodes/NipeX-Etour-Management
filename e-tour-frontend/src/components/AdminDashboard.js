@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import './Dashboard.css';
+import config from '../config'; // config file for API base URL
+
 
 const AdminDashboard = () => {
     const [documents, setDocuments] = useState([]);
@@ -17,10 +19,10 @@ const AdminDashboard = () => {
         try {
             const token = localStorage.getItem('token');
             const [docsResponse, usersResponse] = await Promise.all([
-                axios.get('http://localhost:5237/api/documents/all-documents', {
+                axios.get(`${config.api.baseUrl}/api/documents/all-documents`, {
                     headers: { Authorization: `Bearer ${token}` }
                 }),
-                axios.get('http://localhost:5237/api/documents/users', {
+                axios.get(`${config.api.baseUrl}/api/documents/users`, {
                     headers: { Authorization: `Bearer ${token}` }
                 })
             ]);
