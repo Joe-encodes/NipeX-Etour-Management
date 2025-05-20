@@ -17,7 +17,7 @@ namespace e_tour_api.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.3")
+                .HasAnnotation("ProductVersion", "8.0.8")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -56,14 +56,14 @@ namespace e_tour_api.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Documents", (string)null);
+                    b.ToTable("Documents");
 
                     b.HasData(
                         new
                         {
                             Id = 1,
                             FileName = "Test Document 1",
-                            FilePath = "path/to/test-document-1.pdf",
+                            FilePath = "../wwwroot/uploads/3fdb0d6a-b94e-437f-8feb-95ead990f86d.pdf",
                             Status = "Pending",
                             UploadedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             UserId = 1
@@ -72,7 +72,7 @@ namespace e_tour_api.Migrations
                         {
                             Id = 2,
                             FileName = "Test Document 2",
-                            FilePath = "path/to/test-document-2.pdf",
+                            FilePath = "../wwwroot/uploads/1a0649bc-6b35-4cb1-83df-2232a5793c3c.PDF",
                             Signature = "Approver Signature",
                             Status = "Signed",
                             UploadedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
@@ -106,7 +106,33 @@ namespace e_tour_api.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Email = "testuser@example.com",
+                            PasswordHash = "$2a$11$xSvbaWPoLyCJzJ178mGP/.sMmecXPG.eeEjGRLEj1P0zI.F5iAFzW",
+                            Role = "User",
+                            Username = "testuser"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Email = "approver@example.com",
+                            PasswordHash = "$2a$11$6MU9z5yN3i7QgeTZoqF8Bu7JussC0kxASimKesjyGAKxyAisA9YMq",
+                            Role = "Approver",
+                            Username = "approver"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Email = "admin@example.com",
+                            PasswordHash = "$2a$11$DhTruhJZQ0ss2N3PPAiXo.dcDeIohWgUGCCxXPCpCrFD9dhXdBkqy",
+                            Role = "Admin",
+                            Username = "admin"
+                        });
                 });
 
             modelBuilder.Entity("e_tour_api.Data.Document", b =>

@@ -4,17 +4,34 @@ using BCrypt.Net;
 using System;
 
 namespace e_tour_api.Data
-
 {
+    /// <summary>
+    /// Database context for the e-tour API application.
+    /// </summary>
     public class AppDbContext : DbContext
     {
+        /// <summary>
+        /// Gets or sets the Users DbSet.
+        /// </summary>
         public DbSet<User> Users { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Documents DbSet.
+        /// </summary>
         public DbSet<Document> Documents { get; set; }
 
+        /// <summary>
+        /// Initializes a new instance of the AppDbContext class.
+        /// </summary>
+        /// <param name="options">The options to be used by a DbContext.</param>
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
         {
         }
 
+        /// <summary>
+        /// Configures the model and seeds initial data.
+        /// </summary>
+        /// <param name="modelBuilder">The builder being used to construct the model for this context.</param>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Document>().HasData(
@@ -23,7 +40,7 @@ namespace e_tour_api.Data
                     Id = 1,
                     FileName = "Test Document 1",
                     FilePath = "../wwwroot/uploads/3fdb0d6a-b94e-437f-8feb-95ead990f86d.pdf",
-                    Status = "Pending",
+                    Status = DocumentStatus.Pending,
                     Signature = null,
                     UserId = 1,
                     UploadedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc) // Static value
@@ -33,7 +50,7 @@ namespace e_tour_api.Data
                     Id = 2,
                     FileName = "Test Document 2",
                     FilePath = "../wwwroot/uploads/1a0649bc-6b35-4cb1-83df-2232a5793c3c.PDF",
-                    Status = "Signed",
+                    Status = DocumentStatus.Signed,
                     Signature = "Approver Signature",
                     UserId = 1,
                     UploadedAt = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc) // Static value
@@ -63,6 +80,10 @@ namespace e_tour_api.Data
                     Role         = "Admin"
                 }
             );
+
+            modelBuilder.Entity<Document>()
+                .Property(d => d.Status)
+                .HasConversion<string>();
 
             modelBuilder.Entity<Document>()
                 .HasOne(d => d.User)

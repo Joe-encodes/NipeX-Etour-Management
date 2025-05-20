@@ -8,6 +8,7 @@ using e_tour_api.Data;
 using e_tour_api.Utilities; // Added for HashGenerator
 using Microsoft.OpenApi.Models; // For Swagger configuration
 using e_tour_api.Services; // For IPdfStampService and PdfStampService
+using System.Reflection; // Needed for Assembly
 
 
 public class Program
@@ -17,14 +18,18 @@ public class Program
         var builder = WebApplication.CreateBuilder(args);
 
         // Add services to the container.
-        builder.Services.AddControllers();
+        builder.Services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+            });
 
         // Configure CORS
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("AllowFrontend", builder =>
             {
-                builder.WithOrigins("http://localhost:3000")
+                builder.WithOrigins("http://192.168.0.109:3000", "http://localhost:3000")
                        .AllowAnyMethod()
                        .AllowAnyHeader()
                        .AllowCredentials(); // Added for authenticated requests
@@ -65,20 +70,26 @@ public class Program
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
             };
         });
+        var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
 
         // Add Swagger
         builder.Services.AddSwaggerGen(c =>
         {
             c.SwaggerDoc("v1", new OpenApiInfo { Title = "E-Tour API", Version = "v1" });
-            // Add JWT authentication to Swagger
+
+            var xmlFile = "e-tour-api.xml";
+            var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+            c.IncludeXmlComments(xmlPath, includeControllerXmlComments: true); // Only do this if file exists
+
             c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
                 In = ParameterLocation.Header,
-                Description = "Please enter JWT with Bearer into field (e.g., Bearer {token})",
+                Description = "JWT: Bearer {token}",
                 Name = "Authorization",
                 Type = SecuritySchemeType.ApiKey,
                 Scheme = "Bearer"
             });
+
             c.AddSecurityRequirement(new OpenApiSecurityRequirement
             {
                 {
@@ -95,10 +106,17 @@ public class Program
             });
         });
 
-        builder.Services.AddAuthorization();
+
+        builder.Services.AddAuthorization(options =>
+        {
+            options.AddPolicy("Approver", policy =>
+                policy.RequireRole("Approver"));
+        });
 
         builder.Services.AddScoped<IDocumentService, DocumentService>(); // Register the DocumentService
         builder.Services.AddScoped<IPdfStampService, PdfStampService>(); // Register the PdfStampService
+        builder.Services.AddScoped<CleanupService>(); // Register the CleanupService
+        builder.Services.AddScoped<IUserRepository, UserRepository>(); // Register the UserRepository
 
         var app = builder.Build();
 
@@ -121,43 +139,34 @@ public class Program
         app.UseAuthentication();
         app.UseAuthorization();
 
-        // // Seed initial users at startup
-        // using (var scope = app.Services.CreateScope())
-        // {
-        //     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        //     context.Database.Migrate();
+        // Seed initial users at startup
+        using (var scope = app.Services.CreateScope())
+        {
+            var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        //     if (!context.Users.Any())
-        //     {
-        //         context.Users.AddRange(
-        //             new User
-        //             {
-        //                 Id = 1,
-        //                 Username = "testuser",
-        //                 PasswordHash = HashGenerator.HashPassword("testpassword"),
-        //                 Email = "testuser@example.com",
-        //                 Role = "User"
-        //             },
-        //             new User
-        //             {
-        //                 Id = 2,
-        //                 Username = "approver",
-        //                 PasswordHash = HashGenerator.HashPassword("approverpassword"),
-        //                 Email = "approver@example.com",
-        //                 Role = "Approver"
-        //             },
-        //             new User
-        //             {
-        //                 Id = 3,
-        //                 Username = "admin",
-        //                 PasswordHash = HashGenerator.HashPassword("adminpassword"),
-        //                 Email = "admin@example.com",
-        //                 Role = "Admin"
-        //             }
-        //         );
-        //         context.SaveChanges();
-        //     }
-        // }
+            var databaseProvider = context.Database.ProviderName;
+
+            if (!string.IsNullOrEmpty(databaseProvider) &&
+                databaseProvider != "Microsoft.EntityFrameworkCore.InMemory")
+            {
+                context.Database.Migrate();
+            }
+
+            if (!context.Users.Any())
+            {
+                context.Users.AddRange(
+                    new User
+                    {
+                        Id = 1,
+                        Username = "admin@nipex.com",
+                        PasswordHash = HashGenerator.HashPassword("YourStrongPassword123!"),
+                        Email = "admin@nipex.com",
+                        Role = "Admin"
+                    }
+                );
+                context.SaveChanges();
+            }
+        }
 
         app.MapControllers();
         app.Run();
