@@ -4,34 +4,59 @@ services:
   db:
     image: postgres:15
     environment:
-      POSTGRES_USER: etouruser
-      POSTGRES_PASSWORD: etourpassword
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: etourdb
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d etourdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     build:
       context: ./e-tour-api
       dockerfile: Dockerfile
+      target: development
+    env_file:
+      - .env
     environment:
-      - DB_CONNECTION_STRING=Host=db;Database=etourdb;Username=etouruser;Password=etourpassword
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DB_CONNECTION_STRING=Host=db;Database=etourdb;Username=postgres;Password=postgres
       - JWT_KEY=YourJWTSecretKeyHere
-    depends_on:
-      - db
+      - JWT_ISSUER=http://localhost:5000
+      - JWT_AUDIENCE=http://localhost:5000
+    volumes:
+      - ./e-tour-api:/app
+      - ~/.nuget/packages:/root/.nuget/packages:ro
     ports:
       - "5000:80"
+    depends_on:
+      db:
+        condition: service_healthy
+    command: dotnet watch run --no-launch-profile
 
   frontend:
     build:
       context: ./e-tour-frontend
       dockerfile: Dockerfile
+      target: development
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./e-tour-frontend:/app
+      - /app/node_modules
     ports:
-      - "80:80"
+      - "3000:3000"
     depends_on:
       - backend
+    command: npm start
 
 volumes:
   pgdata:

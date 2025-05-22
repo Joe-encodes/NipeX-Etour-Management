@@ -16,48 +16,30 @@
 
    * **.NET SDK 8**: Download and install from [https://dotnet.microsoft.com/download/dotnet/8.0](https://dotnet.microsoft.com/download/dotnet/8.0)
    * **Node.js 16+ & npm**: Install from [https://nodejs.org/](https://nodejs.org/)
-   * **PostgreSQL client (`psql`)**: Ensure it’s on your PATH.
+   * **PostgreSQL client (`psql`)**: Ensure it's on your PATH.
 3. **Configure environment**
 
-   * Copy and edit the API settings:
+   * Copy the example environment file and fill in your secrets:
 
      ```bash
-     cp e-tour-api/appsettings.json.example e-tour-api/appsettings.json
+     cp .env.example .env
+     # Edit .env and fill in your secrets and config
      ```
-   * Open `e-tour-api/appsettings.json` and fill in:
+   * **Never commit your real `.env` file to the repository.**
+   * The `.env.example` file provides all required variable names and example values.
 
-     ```json
-     {
-       "Jwt": {
-         "Key": "<Your-256-bit-base64-secret>",
-         "Issuer": "eTourApi",
-         "Audience": "eTourApiAudience"
-       },
-       "ConnectionStrings": {
-         "DefaultConnection": "Host=<DB_HOST>;Database=<DB_NAME>;Username=<DB_USER>;Password=<DB_PASSWORD>"
-       },
-       "AllowedHosts": "<YOUR_HOSTNAME>"
-     }
-     ```
 4. **Apply database migrations**
 
    ```bash
    cd e-tour-api
    dotnet tool run dotnet-ef database update --context AppDbContext
    ```
-5. **Run the applications**
+5. **Run the applications (with Docker Compose)**
 
-   * **API** (port 5000):
-
-     ```bash
-     dotnet run --project e-tour-api
-     ```
-   * **Frontend** (port 3000):
-
-     ```bash
-     cd e-tour-frontend
-     npm start
-     ```
+   ```bash
+   docker-compose up --build
+   ```
+   Or run each service manually as described below.
 
 Browse:
 
@@ -68,7 +50,7 @@ Browse:
 
 ## 🎯 Purpose
 
-Automates Nigeria’s public-sector travel approval process with:
+Automates Nigeria's public-sector travel approval process with:
 
 * **Role-Based Access Control** (Admin / Approver / User)
 * **PDF Document Signing** with audit trails
@@ -98,14 +80,26 @@ Automates Nigeria’s public-sector travel approval process with:
 # Already covered in Quick Start
 ```
 
-### 2. Database Configuration
+### 2. Environment Variables & Security
 
-```bash
-# Copy example and edit
-cp e-tour-api/appsettings.json.example e-tour-api/appsettings.json
+- **All secrets and environment-specific values must be set in your `.env` file.**
+- **Never commit your real `.env` file.** The `.env.example` file is provided for reference.
+- The backend, frontend, and database all read their configuration from environment variables.
+- For production, set these variables in your hosting platform's secrets or environment config.
+
+#### Example `.env` (see `.env.example` for all variables):
+
+```env
+REACT_APP_API_URL=http://localhost:5000
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
+DB_NAME=etourdb
+DB_HOST=db
+JWT_KEY=your_jwt_key
+JWT_ISSUER=http://localhost:5000
+JWT_AUDIENCE=http://localhost:5000
+ASPNETCORE_ENVIRONMENT=Development
 ```
-
-Fill placeholders in `appsettings.json` as shown above.
 
 ### 3. Backend Initialization
 
@@ -127,7 +121,7 @@ cd e-tour-frontend
 npm ci
 ```
 
-Ensure `.env` exists and contains:
+Ensure `.env` exists and contains at least:
 
 ```env
 REACT_APP_API_URL=http://localhost:5000
@@ -141,6 +135,12 @@ REACT_APP_ENV=development
 | **API** | `dotnet run` | 5000 | Automatically reloads on changes |
 | **UI**  | `npm start`  | 3000 | Hot-reloads React                |
 
+Or use Docker Compose for all services:
+
+```bash
+docker-compose up --build
+```
+
 ---
 
 ## 🗂️ Critical File Map
@@ -153,7 +153,7 @@ REACT_APP_ENV=development
 | **Documents API** | `e-tour-api/Controllers/DocumentsController.cs` | Core document operations      |
 | **Hash Utility**  | `e-tour-api/Utilities/HashGenerator.cs`         | Password hashing              |
 | **React Entry**   | `e-tour-frontend/src/App.js`                    | Routing & layout              |
-| **Env Example**   | `e-tour-frontend/.env.example`                  | Frontend environment settings |
+| **Env Example**   | `.env.example`                                  | All environment settings      |
 
 ---
 
@@ -170,14 +170,13 @@ REACT_APP_ENV=development
 1. **Migrations error**: Drop DB, clear migrations folder, re-create initial migration:
 
    ```bash
+   dotnet tool run dotnet-ef database drop -f --context AppDbContext
+   dotnet ef migrations remove # until empty
+   dotnet ef migrations add InitialCreate
+   dotnet ef database update
    ```
-
-dotnet tool run dotnet-ef database drop -f --context AppDbContext
-dotnet ef migrations remove # until empty
-dotnet ef migrations add InitialCreate
-dotnet ef database update\`\`\`
-2\. **Duplicates**: Unique key violations mean seed data already exists—use a fresh DB or adjust seed IDs.
-3\. **Missing fonts**: If PDF rendering errors, ensure iText7 StandardFonts package is referenced.
+2. **Duplicates**: Unique key violations mean seed data already exists—use a fresh DB or adjust seed IDs.
+3. **Missing fonts**: If PDF rendering errors, ensure iText7 StandardFonts package is referenced.
 
 ---
 
@@ -187,3 +186,13 @@ dotnet ef database update\`\`\`
 * **Support**: [etour-support@nipex.gov.ng](mailto:etour-support@nipex.gov.ng)
 * **Swagger**: `http://localhost:5000/swagger`
 * **Data Dictionary**: `e-tour-api/Data/Models_Documentation.md`
+
+---
+
+## 🔒 Security & Best Practices
+
+- **Never commit secrets or real environment files.**
+- Use `.env.example` as a template for your own `.env`.
+- For production, use your hosting platform's secret management.
+- The frontend never exposes secrets—only public config like API URLs.
+- The backend always prefers environment variables for sensitive values.
