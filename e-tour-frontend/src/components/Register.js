@@ -1,30 +1,62 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import './Register.css';
-import config from '../config'; // config file for API base URL
 
 const Register = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
     const [email, setEmail] = useState('');
     const [role, setRole] = useState('User');
-    const [message, setMessage] = useState('');
+    const [error, setError] = useState('');
+    const [validationErrors, setValidationErrors] = useState({});
+    const { register } = useAuth();
+    const navigate = useNavigate();
+
+    const validateForm = () => {
+        const errors = {};
+        
+        if (!username.trim()) {
+            errors.username = 'Username is required';
+        }
+        
+        if (!email.trim()) {
+            errors.email = 'Email is required';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            errors.email = 'Invalid email format';
+        }
+        
+        if (!password) {
+            errors.password = 'Password is required';
+        } else if (password.length < 8) {
+            errors.password = 'Password must be at least 8 characters';
+        }
+
+        if (!confirmPassword) {
+            errors.confirmPassword = 'Confirm password is required';
+        } else if (password !== confirmPassword) {
+            errors.confirmPassword = 'Passwords do not match';
+        }
+
+        setValidationErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
 
     const handleRegister = async (e) => {
         e.preventDefault();
-        setMessage('');
+        setError('');
+        setValidationErrors({});
+
+        if (!validateForm()) {
+            return;
+        }
 
         try {
-            await axios.post(`${config.api.baseUrl}/api/auth/register`, {
-                username,
-                password,
-                email,
-                role
-            });
-            setMessage('Registration successful! You can now log in.');
+            await register({ username, password, email, role });
+            navigate('/', { state: { message: 'Registration successful! Please log in.' } });
         } catch (error) {
-            setMessage(`Registration failed: ${error.response?.data || error.message}`);
+            setError(error.response?.data?.message || 'Registration failed. Please try again.');
         }
     };
 
@@ -42,6 +74,9 @@ const Register = () => {
                         onChange={(e) => setUsername(e.target.value)}
                         required
                     />
+                    {validationErrors.username && (
+                        <span className="validation-error">{validationErrors.username}</span>
+                    )}
                 </div>
                 <div className="form-row">
                     <label htmlFor="password" className="form-label">Password:</label>
@@ -53,6 +88,23 @@ const Register = () => {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                     />
+                    {validationErrors.password && (
+                        <span className="validation-error">{validationErrors.password}</span>
+                    )}
+                </div>
+                <div className="form-row">
+                    <label htmlFor="confirmPassword" className="form-label">Confirm Password:</label>
+                    <input
+                        id="confirmPassword"
+                        className="form-input"
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                    />
+                    {validationErrors.confirmPassword && (
+                        <span className="validation-error">{validationErrors.confirmPassword}</span>
+                    )}
                 </div>
                 <div className="form-row">
                     <label htmlFor="email" className="form-label">Email:</label>
@@ -64,6 +116,9 @@ const Register = () => {
                         onChange={(e) => setEmail(e.target.value)}
                         required
                     />
+                    {validationErrors.email && (
+                        <span className="validation-error">{validationErrors.email}</span>
+                    )}
                 </div>
                 <div className="form-row">
                     <label htmlFor="role" className="form-label">Role:</label>
@@ -80,7 +135,7 @@ const Register = () => {
                 </div>
                 <button type="submit">Register</button>
             </form>
-            {message && <p className="error-message">{message}</p>}
+            {error && <p className="error-message">{error}</p>}
             <p>Already have an account? <Link to="/">Login here</Link></p>
         </div>
     );

@@ -1,35 +1,60 @@
 import React, { useState } from 'react';
-import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import './Login.css';
-import config from '../config'; // config file for API base URL
-
 
 const Login = () => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const [message, setMessage] = useState('');
+    const [error, setError] = useState('');
+    const [validationErrors, setValidationErrors] = useState({});
+    const { login } = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const validateForm = () => {
+        const errors = {};
+        
+        if (!username.trim()) {
+            errors.username = 'Username is required';
+        }
+        
+        if (!password) {
+            errors.password = 'Password is required';
+        }
+
+        setValidationErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
 
     const handleLogin = async (e) => {
         e.preventDefault();
-        setMessage('');
+        setError('');
+        setValidationErrors({});
+
+        if (!validateForm()) {
+            return;
+        }
 
         try {
-            const response = await axios.post(`${config.api.baseUrl}/api/auth/login`, {
-                username,
-                password
-            });
-            localStorage.setItem('token', response.data.token);
-
-            if (response.data.role === 'User') {
-                window.location.href = '/user-dashboard';
-            } else if (response.data.role === 'Approver') {
-                window.location.href = '/approver-dashboard';
-            } else if (response.data.role === 'Admin') {
-                window.location.href = '/admin-dashboard';
-            }
+            const userData = await login(username, password);
+            const from = location.state?.from?.pathname || getDashboardPath(userData.role);
+            navigate(from, { replace: true });
         } catch (error) {
-            setMessage(`Login failed: ${error.response?.data || error.message}`);
+            setError(error.response?.data?.message || 'Login failed. Please try again.');
+        }
+    };
+
+    const getDashboardPath = (role) => {
+        switch (role) {
+            case 'User':
+                return '/user-dashboard';
+            case 'Approver':
+                return '/approver-dashboard';
+            case 'Admin':
+                return '/admin-dashboard';
+            default:
+                return '/';
         }
     };
 
@@ -47,6 +72,9 @@ const Login = () => {
                         onChange={(e) => setUsername(e.target.value)}
                         required
                     />
+                    {validationErrors.username && (
+                        <span className="validation-error">{validationErrors.username}</span>
+                    )}
                 </div>
                 <div className="form-row">
                     <label htmlFor="password" className="form-label">Password:</label>
@@ -58,10 +86,13 @@ const Login = () => {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                     />
+                    {validationErrors.password && (
+                        <span className="validation-error">{validationErrors.password}</span>
+                    )}
                 </div>
                 <button type="submit">Login</button>
             </form>
-            {message && <p className="error-message">{message}</p>}
+            {error && <p className="error-message">{error}</p>}
             <p>Don't have an account? <Link to="/register">Register here</Link></p>
         </div>
     );

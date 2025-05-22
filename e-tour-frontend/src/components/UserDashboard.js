@@ -1,133 +1,111 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import axios from 'axios';
-import './Dashboard.css';
-import config from '../config'; // config file for API base URL
+import { AuthContext } from '../contexts/AuthContext';
+import './UserDashboard.css';
 
 const UserDashboard = () => {
-    const [file, setFile] = useState(null);
-    const [documents, setDocuments] = useState([]);
-    const [message, setMessage] = useState('');
+  const [documents, setDocuments] = useState([]);
+  const [error, setError] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const { user } = useContext(AuthContext);
 
-    useEffect(() => {
-        fetchDocuments();
-    }, []);
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
 
-    const fetchDocuments = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get(`${config.api.baseUrl}/api/documents`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            setDocuments(response.data);
-        } catch (error) {
-            setMessage(`Failed to fetch documents: ${error.response?.data || error.message}`);
-        }
-    };
+  const fetchDocuments = async () => {
+    try {
+      const response = await axios.get('/api/documents');
+      setDocuments(Array.isArray(response.data) ? response.data : []);
+      setError('');
+    } catch (error) {
+      setError(`Failed to fetch documents: ${error.response?.data?.message || error.message}`);
+      setDocuments([]);
+    }
+  };
 
-    const handleFileChange = (e) => {
-        setFile(e.target.files[0]);
-    };
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
 
-    const handleUpload = async (e) => {
-        e.preventDefault();
-        setMessage('');
-        if (!file) {
-            setMessage('Please select a file to upload.');
-            return;
-        }
+    setUploading(true);
+    setError('');
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('title', file.name);
+    const formData = new FormData();
+    formData.append('file', file);
 
-        try {
-            const token = localStorage.getItem('token');
-            await axios.post(`${config.api.baseUrl}/api/documents/upload`, formData, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
-            setMessage('Document uploaded successfully!');
-            fetchDocuments();
-        } catch (error) {
-            setMessage(`Failed to upload: ${error.response?.data || error.message}`);
-        }
-    };
+    try {
+      await axios.post('/api/documents', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      await fetchDocuments();
+    } catch (error) {
+      setError(`Failed to upload document: ${error.response?.data?.message || error.message}`);
+    } finally {
+      setUploading(false);
+    }
+  };
 
-    const handleDownload = async (id, fileName) => {
-        try {
-            const token = localStorage.getItem('token');
-            const response = await axios.get(`http://localhost:5237/api/documents/download/${id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-                responseType: 'blob'
-            });
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', fileName);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        } catch (error) {
-            if (error.response?.data instanceof Blob) {
-                const reader = new FileReader();
-                reader.onload = () => {
-                    const errorMessage = reader.result || 'Unknown error';
-                    setMessage(`Failed to download: ${errorMessage}`);
-                };
-                reader.readAsText(error.response.data);
-            } else {
-                setMessage(`Failed to download: ${error.response?.data || error.message}`);
-            }
-        }
-    };
+  const handleDownload = async (documentId) => {
+    try {
+      const response = await axios.get(`/api/documents/${documentId}/download`, {
+        responseType: 'blob',
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `document-${documentId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      setError(`Failed to download document: ${error.response?.data?.message || error.message}`);
+    }
+  };
 
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        window.location.href = '/';
-    };
+  return (
+    <div className="dashboard-container">
+      <h1>Welcome, {user?.username || 'User'}</h1>
+      
+      <div className="upload-section">
+        <h2>Upload Document</h2>
+        <input
+          type="file"
+          onChange={handleFileChange}
+          disabled={uploading}
+          aria-label="Upload document"
+        />
+        {uploading && <p>Uploading...</p>}
+      </div>
 
-    return (
-        <div className="dashboard-container">
-            <h2>User Dashboard</h2>
-            <button onClick={handleLogout} style={{ backgroundColor: '#dc3545' }}>
-                Logout
-            </button>
-            <div>
-                <input type="file" onChange={handleFileChange} />
-                <button onClick={handleUpload}>Upload Document</button>
-            </div>
-            {message && <p>{message}</p>}
-            <h3>Your Documents</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>File Name</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {documents.map(doc => (
-                        <tr key={doc.id}>
-                            <td>{doc.id}</td>
-                            <td>{doc.fileName}</td>
-                            <td>{doc.status}</td>
-                            <td>
-                                {doc.status === 'Signed' && (
-                                    <button onClick={() => handleDownload(doc.id, doc.fileName)}>
-                                        Download
-                                    </button>
-                                )}
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
-    );
+      {error && <div className="error-message">{error}</div>}
+
+      <div className="documents-section">
+        <h2>Your Documents</h2>
+        {documents.length === 0 ? (
+          <p>No documents found.</p>
+        ) : (
+          <div className="documents-list">
+            {documents.map(doc => (
+              <div key={doc.id} className="document-item">
+                <span>{doc.title}</span>
+                <span className="document-status">{doc.status}</span>
+                <button
+                  onClick={() => handleDownload(doc.id)}
+                  disabled={doc.status !== 'Signed'}
+                >
+                  Download
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 };
 
 export default UserDashboard;
