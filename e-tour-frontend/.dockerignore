@@ -1,0 +1,23 @@
+# Dependency directories
+node_modules
+.pnp
+.pnp.js
+
+# Testing
+coverage
+
+# Production build output
+build
+
+# Misc
+.DS_Store
+.env
+.env.*
+!.env.example
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.git
+.gitignore
+.vscode
+.idea 
