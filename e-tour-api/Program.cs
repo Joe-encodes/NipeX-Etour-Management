@@ -29,10 +29,13 @@ public class Program
         {
             options.AddPolicy("AllowFrontend", builder =>
             {
-                builder.WithOrigins("http://192.168.0.109:3000", "http://localhost:3000")
+                builder.WithOrigins(
+                    Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:80",
+                    "http://localhost:3000"
+                )
                        .AllowAnyMethod()
                        .AllowAnyHeader()
-                       .AllowCredentials(); // Added for authenticated requests
+                       .AllowCredentials();
             });
         });
 
