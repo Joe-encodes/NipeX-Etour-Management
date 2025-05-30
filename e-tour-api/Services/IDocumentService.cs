@@ -1,6 +1,9 @@
 // Services/IDocumentService.cs
 using e_tour_api.Data;
 using Microsoft.AspNetCore.Mvc;
+using e_tour_api.Models;
+using Microsoft.AspNetCore.Http;
+using e_tour_api.Models.DTOs;
 
 namespace e_tour_api.Services
 {
@@ -9,55 +12,31 @@ namespace e_tour_api.Services
     /// </summary>
     public interface IDocumentService
     {
-        /// <summary>
-        /// Retrieves a document by its ID.
-        /// </summary>
-        /// <param name="documentId">The ID of the document</param>
-        /// <returns>The document if found, otherwise null</returns>
+        // Document Retrieval Methods
+        Task<ServiceResult<DocumentDto>> GetDocumentWithCacheAsync(int documentId, int userId);
         Task<Document?> GetDocumentById(int documentId);
+        Task<ServiceResult<List<DocumentDto>>> GetUserDocumentsAsync(int userId);
+        Task<ServiceResult<List<DocumentDto>>> GetPendingDocumentsAsync();
+        Task<ServiceResult<List<DocumentDto>>> GetAllDocumentsAsync();
+        Task<ServiceResult<DocumentFile>> GetDocumentFile(int documentId);
 
-        /// <summary>
-        /// Retrieves all documents for a specific user.
-        /// </summary>
-        /// <param name="userId">The ID of the user</param>
-        /// <returns>List of user's documents</returns>
-        Task<List<Document>> GetUserDocumentsAsync(int userId);
+        // Document Management Methods
+        Task<ServiceResult<DocumentDto>> UploadDocumentAsync(int userId, string title, IFormFile file);
+        Task<ServiceResult> UpdateDocument(Document document);
+        Task<ServiceResult> DeleteDocumentAsync(int documentId);
+        Task InvalidateDocumentCacheAsync(int documentId);
 
-        /// <summary>
-        /// Retrieves all pending documents.
-        /// </summary>
-        /// <returns>List of pending documents</returns>
-        Task<List<Document>> GetPendingDocumentsAsync();
+        // Document Approval Methods
+        Task<ServiceResult<DocumentApprovalDto>> AssignApproverAsync(int documentId, int approverId, float signaturePositionX, float signaturePositionY, int signaturePage, string? comments);
+        Task<ServiceResult<List<DocumentApprovalDto>>> GetPendingApprovalsAsync(int userId);
+        Task<ServiceResult<DocumentDto>> ApproveDocumentAsync(int documentId, int userId, string? signature, string? password);
+        Task<ServiceResult<DocumentDto>> RejectDocumentAsync(int documentId, int userId, string? reason);
 
-        /// <summary>
-        /// Verifies if a user has access to a document.
-        /// </summary>
-        /// <param name="documentId">The ID of the document</param>
-        /// <param name="userId">The ID of the user</param>
-        /// <returns>Result indicating access status</returns>
-        Task<DocumentAccessResult> VerifyDocumentAccess(int documentId, int userId);
+        // Document Access and Stamping
+        Task<ServiceResult> VerifyDocumentAccess(int documentId, int userId);
+        Task<ServiceResult<string>> StampDocument(int documentId, string stampText, string uploadsPath, string? password = null);
 
-        /// <summary>
-        /// Stamps a document with specified text.
-        /// </summary>
-        /// <param name="documentId">The ID of the document</param>
-        /// <param name="stampText">Text to stamp on the document</param>
-        /// <param name="uploadsPath">Path to uploads directory</param>
-        /// <param name="password">Optional password for stamping</param>
-        /// <returns>Result of the stamping operation</returns>
-        Task<StampResult> StampDocument(int documentId, string stampText, string uploadsPath, string? password = null);
-
-        /// <summary>
-        /// Retrieves the file content of a document.
-        /// </summary>
-        /// <param name="documentId">The ID of the document</param>
-        /// <returns>File result containing the document file</returns>
-        Task<FileResult> GetDocumentFile(int documentId);
-
-        /// <summary>
-        /// Updates a document entity.
-        /// </summary>
-        /// <param name="document">The document to update</param>
-        Task UpdateDocument(Document document);
+        // User Management
+        Task<ServiceResult<List<UserProfileDto>>> GetAllUsersAsync();
     }
 }

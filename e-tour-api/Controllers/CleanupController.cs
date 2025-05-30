@@ -1,8 +1,9 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authorization;
 using e_tour_api.Services;
+using e_tour_api.Models;
+using Microsoft.Extensions.Logging;
 
 namespace e_tour_api.Controllers
 {
@@ -29,13 +30,52 @@ namespace e_tour_api.Controllers
         /// <returns>Count of deleted orphaned files</returns>
         [HttpPost("orphaned-files")]
         [Authorize(Roles = "Admin")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ServiceResult<CleanupResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ServiceResult<object>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ServiceResult<object>), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> CleanupOrphanedFiles([FromQuery] string? fileNameFilter = null)
         {
-            var deletedCount = await _cleanupService.CleanupOrphanedFilesAsync(fileNameFilter);
-            _logger.LogInformation("Cleanup completed. Deleted {Count} orphaned files.", deletedCount);
-            return Ok(new { message = "Cleanup completed", deletedFiles = deletedCount });
+            try
+            {
+                if (!string.IsNullOrEmpty(fileNameFilter))
+                {
+                    _logger.LogInformation("Starting cleanup with filter: {Filter}", fileNameFilter);
+                }
+                else
+                {
+                    _logger.LogInformation("Starting cleanup of all orphaned files");
+                }
+
+                var deletedCount = await _cleanupService.CleanupOrphanedFilesAsync(fileNameFilter);
+                _logger.LogInformation("Cleanup completed. Deleted {Count} orphaned files.", deletedCount);
+
+                var response = new CleanupResponse
+                {
+                    DeletedFiles = deletedCount,
+                    Message = "Cleanup completed successfully"
+                };
+
+                return Ok(ServiceResult<CleanupResponse>.Ok(response, "Cleanup completed successfully"));
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning("Invalid cleanup filter: {Filter}", fileNameFilter);
+                return BadRequest(ServiceResult<object>.Error(ex.Message, 400));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during cleanup operation");
+                return StatusCode(500, ServiceResult<object>.Error("An error occurred during cleanup operation", 500));
+            }
         }
+    }
+
+    /// <summary>
+    /// Cleanup response model
+    /// </summary>
+    public class CleanupResponse
+    {
+        public int DeletedFiles { get; set; }
+        public string Message { get; set; } = string.Empty;
     }
 }

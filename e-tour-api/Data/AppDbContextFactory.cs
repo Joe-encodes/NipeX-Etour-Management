@@ -14,16 +14,15 @@ namespace e_tour_api.Data
         public AppDbContext CreateDbContext(string[] args)
         {
             // 1. Build the same configuration your app uses:
+            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
             var config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())       // e-tour-api folder
                 .AddJsonFile("appsettings.json", optional: false)   // core settings
-                .AddJsonFile(
-                    $"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json",
-                    optional: true)                                 // env‑specific overrides
+                .AddJsonFile($"appsettings.{environment}.json", optional: true)  // env‑specific overrides
                 .AddEnvironmentVariables()                          // final override
                 .Build();
 
-            // 2. Read the DefaultConnection from JSON or ENV
+            // 2. Read the connection string from configuration
             var conn = config.GetConnectionString("DefaultConnection");
             if (string.IsNullOrEmpty(conn))
                 throw new InvalidOperationException(

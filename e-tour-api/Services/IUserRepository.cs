@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using e_tour_api.Data;
+using e_tour_api.Models;
 
 namespace e_tour_api.Services
 {
@@ -21,5 +21,12 @@ namespace e_tour_api.Services
         /// <param name="username">Username to search for</param>
         /// <returns>User entity if found, otherwise null</returns>
         Task<User?> GetUserByUsernameAsync(string username);
+
+        /// <summary>
+        /// Retrieves a user by ID asynchronously.
+        /// </summary>
+        /// <param name="id">User ID to search for</param>
+        /// <returns>User entity if found, otherwise null</returns>
+        Task<User?> GetUserByIdAsync(int id);
     }
 }
