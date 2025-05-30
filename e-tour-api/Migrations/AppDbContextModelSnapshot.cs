@@ -22,7 +22,7 @@ namespace e_tour_api.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("e_tour_api.Data.Document", b =>
+            modelBuilder.Entity("e_tour_api.Models.Document", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -31,20 +31,24 @@ namespace e_tour_api.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<string>("FileName")
-                        .HasColumnType("text");
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
 
                     b.Property<string>("FilePath")
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("Signature")
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("SignedFilePath")
-                        .HasColumnType("text");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("UploadedAt")
                         .HasColumnType("timestamp with time zone");
@@ -53,6 +57,10 @@ namespace e_tour_api.Migrations
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("UploadedAt");
 
                     b.HasIndex("UserId");
 
@@ -64,7 +72,7 @@ namespace e_tour_api.Migrations
                             Id = 1,
                             FileName = "Test Document 1",
                             FilePath = "../wwwroot/uploads/3fdb0d6a-b94e-437f-8feb-95ead990f86d.pdf",
-                            Status = "Pending",
+                            Status = 0,
                             UploadedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             UserId = 1
                         },
@@ -74,13 +82,13 @@ namespace e_tour_api.Migrations
                             FileName = "Test Document 2",
                             FilePath = "../wwwroot/uploads/1a0649bc-6b35-4cb1-83df-2232a5793c3c.PDF",
                             Signature = "Approver Signature",
-                            Status = "Signed",
+                            Status = 1,
                             UploadedAt = new DateTime(2025, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             UserId = 1
                         });
                 });
 
-            modelBuilder.Entity("e_tour_api.Data.User", b =>
+            modelBuilder.Entity("e_tour_api.Models.DocumentApproval", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -88,23 +96,189 @@ namespace e_tour_api.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Email")
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ApproverId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("AssignedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Comments")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("DocumentId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("RejectedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("SignaturePage")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("SignaturePositionX")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("SignaturePositionY")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApproverId");
+
+                    b.HasIndex("AssignedAt");
+
+                    b.HasIndex("DocumentId");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("DocumentApprovals");
+                });
+
+            modelBuilder.Entity("e_tour_api.Models.Message", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EncryptedContent")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ReceiverId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SenderId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("ReceiverId");
+
+                    b.HasIndex("SenderId");
+
+                    b.ToTable("Messages");
+                });
+
+            modelBuilder.Entity("e_tour_api.Models.RefreshToken", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiryDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastUsedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("RefreshTokens");
+                });
+
+            modelBuilder.Entity("e_tour_api.Models.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Bio")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("EmailVerificationExpiry")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EmailVerificationToken")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<bool>("IsEmailVerified")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("LastLoginAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("ProfilePicture")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<string>("Role")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("Username")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("Username")
+                        .IsUnique();
 
                     b.ToTable("Users");
 
@@ -112,32 +286,38 @@ namespace e_tour_api.Migrations
                         new
                         {
                             Id = 1,
+                            CreatedAt = new DateTime(2025, 5, 29, 12, 21, 28, 593, DateTimeKind.Utc).AddTicks(1750),
                             Email = "testuser@example.com",
-                            PasswordHash = "$2a$11$xSvbaWPoLyCJzJ178mGP/.sMmecXPG.eeEjGRLEj1P0zI.F5iAFzW",
+                            IsEmailVerified = false,
+                            PasswordHash = "$2a$11$SATqkbVb/kXtAGqGDidt2O9MmElJtXh0IUtAo6KRI8mdUDnZK8u/y",
                             Role = "User",
                             Username = "testuser"
                         },
                         new
                         {
                             Id = 2,
+                            CreatedAt = new DateTime(2025, 5, 29, 12, 21, 28, 798, DateTimeKind.Utc).AddTicks(5320),
                             Email = "approver@example.com",
-                            PasswordHash = "$2a$11$6MU9z5yN3i7QgeTZoqF8Bu7JussC0kxASimKesjyGAKxyAisA9YMq",
+                            IsEmailVerified = false,
+                            PasswordHash = "$2a$11$MGUlznxqc06j9yWWyaJd7OQefvAdOusWZWGdDG9D5IwEzBm6RkhMK",
                             Role = "Approver",
                             Username = "approver"
                         },
                         new
                         {
                             Id = 3,
+                            CreatedAt = new DateTime(2025, 5, 29, 12, 21, 29, 4, DateTimeKind.Utc).AddTicks(6500),
                             Email = "admin@example.com",
-                            PasswordHash = "$2a$11$DhTruhJZQ0ss2N3PPAiXo.dcDeIohWgUGCCxXPCpCrFD9dhXdBkqy",
+                            IsEmailVerified = false,
+                            PasswordHash = "$2a$11$nRbQ19C5elJmM4QjpHz3Je2oapF3iMDkqlyxdrXYx43/BtxX9xc2q",
                             Role = "Admin",
                             Username = "admin"
                         });
                 });
 
-            modelBuilder.Entity("e_tour_api.Data.Document", b =>
+            modelBuilder.Entity("e_tour_api.Models.Document", b =>
                 {
-                    b.HasOne("e_tour_api.Data.User", "User")
+                    b.HasOne("e_tour_api.Models.User", "User")
                         .WithMany("Documents")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -146,9 +326,64 @@ namespace e_tour_api.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("e_tour_api.Data.User", b =>
+            modelBuilder.Entity("e_tour_api.Models.DocumentApproval", b =>
                 {
+                    b.HasOne("e_tour_api.Models.User", "Approver")
+                        .WithMany("AssignedApprovals")
+                        .HasForeignKey("ApproverId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("e_tour_api.Models.Document", "Document")
+                        .WithMany()
+                        .HasForeignKey("DocumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Approver");
+
+                    b.Navigation("Document");
+                });
+
+            modelBuilder.Entity("e_tour_api.Models.Message", b =>
+                {
+                    b.HasOne("e_tour_api.Models.User", "Receiver")
+                        .WithMany("ReceivedMessages")
+                        .HasForeignKey("ReceiverId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("e_tour_api.Models.User", "Sender")
+                        .WithMany("SentMessages")
+                        .HasForeignKey("SenderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Receiver");
+
+                    b.Navigation("Sender");
+                });
+
+            modelBuilder.Entity("e_tour_api.Models.RefreshToken", b =>
+                {
+                    b.HasOne("e_tour_api.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("e_tour_api.Models.User", b =>
+                {
+                    b.Navigation("AssignedApprovals");
+
                     b.Navigation("Documents");
+
+                    b.Navigation("ReceivedMessages");
+
+                    b.Navigation("SentMessages");
                 });
 #pragma warning restore 612, 618
         }
