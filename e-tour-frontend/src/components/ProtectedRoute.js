@@ -1,24 +1,45 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import authService from '../services/authService';
 
 const ProtectedRoute = ({ children, requiredRole }) => {
-  const { isAuthenticated, hasRole, loading } = useAuth();
-  const location = useLocation();
+    const [isAuthenticated, setIsAuthenticated] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const location = useLocation();
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                const isAuth = await authService.isAuthenticated();
+                setIsAuthenticated(isAuth);
+            } catch (error) {
+                setIsAuthenticated(false);
+            } finally {
+                setIsLoading(false);
+            }
+        };
 
-  if (!isAuthenticated()) {
-    return <Navigate to="/" state={{ from: location }} replace />;
-  }
+        checkAuth();
+    }, []);
 
-  if (requiredRole && !hasRole(requiredRole)) {
-    return <Navigate to="/unauthorized" replace />;
-  }
+    if (isLoading) {
+        return <div>Loading...</div>; // Or your loading component
+    }
 
-  return children;
+    if (!isAuthenticated) {
+        // Redirect to login page with return url
+        return <Navigate to="/login" state={{ from: location }} replace />;
+    }
+
+    // If role is required, check it
+    if (requiredRole) {
+        const user = authService.getCurrentUser();
+        if (user?.role !== requiredRole) {
+            return <Navigate to="/unauthorized" replace />;
+        }
+    }
+
+    return children;
 };
 
 export default ProtectedRoute; 
