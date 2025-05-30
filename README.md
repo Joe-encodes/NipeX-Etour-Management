@@ -93,7 +93,7 @@ Automates Nigeria's public-sector travel approval process with:
 REACT_APP_API_URL=http://localhost:5000
 DB_USER=your_db_user
 DB_PASSWORD=your_db_password
-DB_NAME=etourdb
+DB_NAME=etour
 DB_HOST=db
 JWT_KEY=your_jwt_key
 JWT_ISSUER=http://localhost:5000

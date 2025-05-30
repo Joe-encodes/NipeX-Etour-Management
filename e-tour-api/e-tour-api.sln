@@ -4,8 +4,6 @@ VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "e-tour-api", "e-tour-api.csproj", "{CA9DB8BF-F579-21AB-6947-AAA51B3D9631}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "e-tour-api.Tests", "Tests\e-tour-api.Tests.csproj", "{51B5DFAD-20C0-4D46-B2F8-49455F494796}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -16,10 +14,6 @@ Global
 		{CA9DB8BF-F579-21AB-6947-AAA51B3D9631}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CA9DB8BF-F579-21AB-6947-AAA51B3D9631}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CA9DB8BF-F579-21AB-6947-AAA51B3D9631}.Release|Any CPU.Build.0 = Release|Any CPU
-		{51B5DFAD-20C0-4D46-B2F8-49455F494796}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{51B5DFAD-20C0-4D46-B2F8-49455F494796}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{51B5DFAD-20C0-4D46-B2F8-49455F494796}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{51B5DFAD-20C0-4D46-B2F8-49455F494796}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
